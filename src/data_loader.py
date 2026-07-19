@@ -2,33 +2,43 @@
 Task 1: Load and explore the unified financial inclusion dataset.
 """
 import pandas as pd
+import glob
+import os
+from pathlib import Path
 
-RAW_DIR = "data/raw"
-PROCESSED_DIR = "data/processed"
+# Anchor paths to the project root, regardless of where this is run from
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RAW_DIR = PROJECT_ROOT / "data" / "raw"
+PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
-DATA_FILE = f"{RAW_DIR}/ethiopia_fi_unified_data.xlsx"
-REF_FILE = f"{RAW_DIR}/reference_codes.csv"
-
+DATA_FILE = RAW_DIR / "ethiopia_fi_unified_data.xlsx"
 DATA_SHEET = "ethiopia_fi_unified_data"
 IMPACT_SHEET = "Impact_sheet"
 
 
+def find_reference_file():
+    """Locate reference_codes file regardless of exact name/extension."""
+    candidates = list(RAW_DIR.glob("*eference*cod*"))
+    if not candidates:
+        raise FileNotFoundError(
+            f"No reference codes file found in {RAW_DIR}. "
+            f"Files present: {os.listdir(RAW_DIR)}"
+        )
+    return candidates[0]
+
+
 def load_datasets():
-    """Load both sheets from the workbook and combine into one unified df."""
+    """Load both sheets from the workbook, combine, and load reference codes."""
     main_df = pd.read_excel(DATA_FILE, sheet_name=DATA_SHEET)
     impact_df = pd.read_excel(DATA_FILE, sheet_name=IMPACT_SHEET)
 
-    print(f"Main sheet columns: {list(main_df.columns)}")
-    print(f"Impact sheet columns: {list(impact_df.columns)}\n")
-
-    # Combine — pandas will align matching columns and fill mismatches with NaN
     df = pd.concat([main_df, impact_df], ignore_index=True, sort=False)
 
-    # Reference codes
-    try:
-        ref = pd.read_csv(REF_FILE)
-    except FileNotFoundError:
-        ref = pd.read_excel(REF_FILE.replace(".csv", ".xlsx"))
+    ref_path = find_reference_file()
+    if str(ref_path).endswith(".csv"):
+        ref = pd.read_csv(ref_path)
+    else:
+        ref = pd.read_excel(ref_path)
 
     return df, ref
 

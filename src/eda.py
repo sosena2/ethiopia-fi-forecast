@@ -7,9 +7,11 @@ import seaborn as sns
 import numpy as np
 import os
 from .data_loader import load_datasets, profile_dataset
+from pathlib import Path
 
 sns.set_theme(style="whitegrid")
-FIG_DIR = "reports/figures"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FIG_DIR = PROJECT_ROOT / "reports" / "figures"
 os.makedirs(FIG_DIR, exist_ok=True)
 
 
@@ -251,12 +253,18 @@ def impact_link_summary(df: pd.DataFrame):
     print("7. IMPACT LINK SUMMARY")
     print("=" * 60)
 
-    links = df[df["record_type"] == "impact_link"]
+    links = df[df["record_type"] == "impact_link"][
+        ["parent_id", "related_indicator", "impact_direction",
+         "impact_magnitude", "lag_months", "evidence_basis", "confidence"]
+    ]
+
     events = df[df["record_type"] == "event"][["record_id", "indicator", "category"]]
-    events = events.rename(columns={"record_id": "parent_id", "indicator": "event_name"})
+    events = events.rename(columns={"record_id": "parent_id",
+                                     "indicator": "event_name",
+                                     "category": "event_category"})
 
     merged = links.merge(events, on="parent_id", how="left")
-    summary = merged[["event_name", "category", "related_indicator",
+    summary = merged[["event_name", "event_category", "related_indicator",
                        "impact_direction", "impact_magnitude", "lag_months",
                        "evidence_basis", "confidence"]]
     print(summary.to_string(index=False))
