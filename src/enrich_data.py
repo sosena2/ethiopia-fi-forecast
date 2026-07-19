@@ -73,7 +73,11 @@ def build_new_rows(existing_columns: list[str]) -> pd.DataFrame:
     return new_df[existing_columns]
 
 
-def enrich_and_save(df: pd.DataFrame, out_path: str = "data/processed/ethiopia_fi_enriched.csv"):
+from .data_loader import PROCESSED_DIR
+
+def enrich_and_save(df: pd.DataFrame, out_path=None):
+    if out_path is None:
+        out_path = PROCESSED_DIR / "ethiopia_fi_enriched.csv"
     new_rows = build_new_rows(df.columns.tolist())
     enriched = pd.concat([df, new_rows], ignore_index=True)
     enriched.to_csv(out_path, index=False)
