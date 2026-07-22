@@ -1,79 +1,98 @@
 """
 Task 1: Enrich the dataset with additional observations, events, and impact_links.
-Each new row must follow the unified schema exactly.
+Each new row follows the unified schema exactly, sourced from GSMA and NBE.
 """
 import pandas as pd
 from datetime import date
+from .data_loader import load_datasets, PROCESSED_DIR
 
 COLLECTOR = "Sosena Gossaye"
 TODAY = date.today().isoformat()
 
 
 def build_new_rows(existing_columns: list[str]) -> pd.DataFrame:
-    """
-    Returns a DataFrame of new rows matching `existing_columns`.
-    Fill in only the fields relevant to each record_type; leave rest blank/NaN.
-    """
     rows = []
 
-    # --- Example: new OBSERVATION (Sheet B - Direct Correlation: agent density) ---
+    # --- New OBSERVATION: mobile money agent count (Sheet B - direct correlation) ---
     rows.append({
         "record_type": "observation",
-        "pillar": "access",
+        "category": None,
+        "pillar": "ACCESS",
         "indicator": "Mobile Money Agent Count",
         "indicator_code": "ACC_MM_AGENTS",
-        "value_numeric": None,          # <-- fill with real figure once sourced
-        "observation_date": "2024-12-31",
-        "source_name": "GSMA Mobile Money Deployment Tracker",
-        "source_url": "",               # <-- paste exact URL
-        "original_text": "",            # <-- exact quote/figure from source
+        "indicator_direction": "positive",
+        "value_numeric": 200000,
+        "value_text": None,
+        "value_type": "count",
+        "unit": "agents",
+        "observation_date": "2022-09-30",
+        "source_name": "GSMA Mobile for Development (citing NBE)",
+        "source_type": "research",
+        "source_url": "https://www.gsma.com/mobilefordevelopment/blog/mobile-money-in-ethiopia-what-we-learnt-from-our-expert-roundtable/",
         "confidence": "medium",
         "collected_by": COLLECTOR,
         "collection_date": TODAY,
-        "notes": "Agent density is a Sheet B direct-correlation indicator for access.",
+        "original_text": "mobile money agents grew by 200% in the year to September 2022 to over 200,000",
+        "notes": "NBE official data via GSMA roundtable summary. Direct-correlation access indicator "
+                 "(Sheet B) — agent density is the primary determinant of cash-in/cash-out accessibility, "
+                 "which Findex research links to account activation. Also compare to Telebirr's own "
+                 "111,000-agent figure with only 20% weekly-active rate reported in the same article, "
+                 "reinforcing the registered-vs-active dormancy pattern already observed in Task 2.",
     })
 
-    # --- Example: new EVENT (leave pillar empty per instructions) ---
+    # --- New EVENT: NBE Payment Instrument Issuer Directive (leave pillar empty) ---
     rows.append({
         "record_type": "event",
-        "pillar": None,
-        "event_name": "NBE Digital Payment Regulation Update",
         "category": "policy",
-        "observation_date": "",         # <-- fill with real date
-        "source_name": "",
-        "source_url": "",
-        "original_text": "",
+        "pillar": None,
+        "indicator": "NBE Payment Instrument Issuer Directive NPS/10/2025",
+        "indicator_code": None,
+        "observation_date": "2025-05-12",
+        "source_name": "National Bank of Ethiopia / Addis Insight",
+        "source_type": "regulator",
+        "source_url": "https://addisinsight.net/2025/05/27/national-bank-of-ethiopia-issues-new-directive-to-strengthen-digital-payment-ecosystem/",
+        "confidence": "high",
+        "collected_by": COLLECTOR,
+        "collection_date": TODAY,
+        "original_text": "Raising the daily electronic money transaction limits to 300,000 Birr and "
+                          "150,000 Birr daily electronic money balance... Mandates mandatory interoperability "
+                          "between mobile money wallets... Mandates financial institutions to participate in "
+                          "the Ethiopian Instant Payment Systems (EIPS)",
+        "notes": "Directive took effect May 12, 2025. Raises daily transaction/balance limits and mandates "
+                 "wallet-to-wallet interoperability across mobile money operators — directly targets the "
+                 "usage/frequency constraints that may explain the registered-vs-active gap found in Task 2.",
+    })
+
+    # --- New IMPACT_LINK: directive -> digital payment usage ---
+    rows.append({
+        "record_type": "impact_link",
+        "parent_id": "EVT_NEW_001",   # must match the record_id assigned to the event above once merged
+        "category": None,
+        "pillar": "USAGE",
+        "related_indicator": "USG_P2P_COUNT",
+        "relationship_type": "causal",
+        "impact_direction": "increase",
+        "impact_magnitude": "medium",
+        "impact_estimate": None,
+        "lag_months": 6,
+        "evidence_basis": "theoretical",
+        "comparable_country": None,
         "confidence": "medium",
         "collected_by": COLLECTOR,
         "collection_date": TODAY,
-        "notes": "Regulatory change potentially affecting digital payment adoption.",
-    })
-
-    # --- Example: new IMPACT_LINK (parent_id must match an event's id) ---
-    rows.append({
-        "record_type": "impact_link",
-        "parent_id": "",                # <-- id of the event above once assigned
-        "pillar": "usage",
-        "related_indicator": "USG_DIGITAL_PAYMENT",
-        "impact_direction": "positive",
-        "impact_magnitude": None,       # <-- estimate, document reasoning in log
-        "lag_months": 6,
-        "evidence_basis": "comparable_country",
-        "confidence": "low",
-        "collected_by": COLLECTOR,
-        "collection_date": TODAY,
-        "notes": "Estimated from comparable regulatory changes in Kenya/Tanzania.",
+        "notes": "Mandatory wallet-to-wallet interoperability under NPS/10/2025 should reduce switching "
+                 "friction between Telebirr, M-Pesa, and bank-linked wallets, plausibly increasing P2P "
+                 "transaction counts within 6 months. No pre/post Ethiopian data yet available (directive "
+                 "is recent as of this analysis), so effect is estimated on theoretical/regulatory-intent "
+                 "grounds rather than observed data — flagged medium confidence accordingly.",
     })
 
     new_df = pd.DataFrame(rows)
-    # align to existing schema, add any missing cols as NaN
     for col in existing_columns:
         if col not in new_df.columns:
             new_df[col] = None
     return new_df[existing_columns]
 
-
-from .data_loader import PROCESSED_DIR
 
 def enrich_and_save(df: pd.DataFrame, out_path=None):
     if out_path is None:
@@ -86,6 +105,5 @@ def enrich_and_save(df: pd.DataFrame, out_path=None):
 
 
 if __name__ == "__main__":
-    from .data_loader import load_datasets
     df, ref = load_datasets()
     enrich_and_save(df)
