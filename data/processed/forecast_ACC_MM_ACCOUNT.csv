@@ -1,0 +1,10 @@
+year,scenario,forecast,lower_95,upper_95
+2025,pessimistic,11.327430555555525,-inf,inf
+2026,pessimistic,12.916666666666334,-inf,inf
+2027,pessimistic,14.499999999999819,-inf,inf
+2025,base,11.621527777777747,-inf,inf
+2026,base,13.216666666666333,-inf,inf
+2027,base,14.799999999999818,-inf,inf
+2025,optimistic,11.91562499999997,-inf,inf
+2026,optimistic,13.516666666666334,-inf,inf
+2027,optimistic,15.099999999999818,-inf,inf
