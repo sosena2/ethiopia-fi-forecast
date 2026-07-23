@@ -15,6 +15,7 @@ def build_new_rows(existing_columns: list[str]) -> pd.DataFrame:
 
     # --- New OBSERVATION: mobile money agent count (Sheet B - direct correlation) ---
     rows.append({
+        "record_id": "OBS_NEW_001",
         "record_type": "observation",
         "category": None,
         "pillar": "ACCESS",
@@ -42,6 +43,7 @@ def build_new_rows(existing_columns: list[str]) -> pd.DataFrame:
 
     # --- New EVENT: NBE Payment Instrument Issuer Directive (leave pillar empty) ---
     rows.append({
+        "record_id": "EVT_NEW_001",
         "record_type": "event",
         "category": "policy",
         "pillar": None,
